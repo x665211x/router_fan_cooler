@@ -1,0 +1,109 @@
+# 路由器散热底座 — Lovelace 卡片示例（v2.1.0 三控制方式版）
+# 用法：仪表盘 → 右上三点 → 编辑 → 添加卡片 → 手动（YAML），粘贴对应段落。
+# entity_id 是示例，请按实机替换。
+
+# ① 简洁版：一把看全所有控件
+type: entities
+title: 路由器散热底座
+state_color: true
+entities:
+  - entity: sensor.router_fan_cooler_cpu_temp
+    name: CPU 温度
+  - entity: sensor.router_fan_cooler_duty
+    name: 风扇占空比
+  - entity: binary_sensor.router_fan_cooler_running
+    name: 风扇运转
+  - entity: sensor.router_fan_cooler_status
+    name: 控制状态
+  - entity: select.router_fan_cooler_strategy
+    name: 控制方式
+  - entity: select.router_fan_cooler_mode
+    name: 模式
+  - entity: number.router_fan_cooler_target_temp
+    name: 目标温度（恒温闭环）
+  - entity: number.router_fan_cooler_deadband
+    name: 容差（恒温闭环）
+  - entity: number.router_fan_cooler_min_temp
+    name: 曲线起点温度
+  - entity: number.router_fan_cooler_max_temp
+    name: 曲线终点温度
+  - entity: number.router_fan_cooler_min_duty
+    name: 最低转速（≥20%）
+  - entity: number.router_fan_cooler_manual_duty
+    name: 手动占空比
+
+---
+
+# ② 带温度曲线（需要 HACS 的 mini-graph-card）
+type: custom:mini-graph-card
+name: 路由器 CPU 温度 / 风扇占空比
+hours_to_show: 24
+points_per_hour: 12
+line_width: 2
+entities:
+  - entity: sensor.router_fan_cooler_cpu_temp
+    name: CPU 温度
+    color: "#e74c3c"
+  - entity: sensor.router_fan_cooler_duty
+    name: 占空比
+    color: "#3498db"
+    y_axis: secondary
+
+---
+
+# ③ 一屏两栏（当前状态 + 快捷切换控制方式）
+type: vertical-stack
+cards:
+  - type: glance
+    title: 散热底座
+    entities:
+      - entity: sensor.router_fan_cooler_cpu_temp
+        name: 温度
+      - entity: sensor.router_fan_cooler_duty
+        name: 占空比
+      - entity: sensor.router_fan_cooler_status
+        name: 状态
+  - type: entities
+    entities:
+      - entity: select.router_fan_cooler_mode
+      - entity: select.router_fan_cooler_strategy
+      - type: button
+        name: 恒温闭环（40℃ 稳住）
+        tap_action:
+          action: perform-action
+          perform_action: router_fan_cooler.set_strategy
+          data:
+            strategy: thermostat
+        icon: mdi:thermostat
+      - type: button
+        name: 切到温度曲线
+        tap_action:
+          action: perform-action
+          perform_action: router_fan_cooler.set_strategy
+          data:
+            strategy: curve
+        icon: mdi:chart-line
+      - type: button
+        name: 切到阶梯分段（安静）
+        tap_action:
+          action: perform-action
+          perform_action: router_fan_cooler.set_strategy
+          data:
+            strategy: step
+        icon: mdi:stairs
+      - type: button
+        name: 全速 30 秒（临时散热）
+        tap_action:
+          action: perform-action
+          perform_action: router_fan_cooler.set_speed
+          data:
+            percentage: 100
+        icon: mdi:fan-speed-3
+      - type: button
+        name: 回到自动控温
+        tap_action:
+          action: perform-action
+          perform_action: router_fan_cooler.set_mode
+          data:
+            mode: auto
+        icon: mdi:autorenew

@@ -1,0 +1,103 @@
+# 路由器散热底座风扇控制 — 示例自动化（v2.0.0 恒温版）
+#
+# 用法：复制需要的条目到 automations.yaml，或
+#       设置 → 自动化 → 新建 → 右上三点 → 以 YAML 编辑，粘贴其中一段。
+#
+# entity_id 为固定英文 ID，安装后不变；如被改名请按实际替换。
+# 恒温模式下「调目标温度」就是调凉快程度：目标越低越凉、风扇越响。
+
+# 1) 夜间降噪：23:00 目标 40℃ → 45℃（允许 CPU 热一点，风扇更安静）
+- id: cooler_night_quiet
+  alias: 散热底座-夜间降噪
+  description: 23:00 抬高目标温度，降低风扇噪音
+  trigger:
+    - platform: time
+      at: "23:00:00"
+  action:
+    - action: number.set_value
+      target:
+        entity_id: number.router_fan_cooler_target_temp
+      data:
+        value: 45
+  mode: single
+
+# 2) 早上恢复：07:00 目标回到 40℃
+- id: cooler_day_normal
+  alias: 散热底座-白天恢复温度目标
+  trigger:
+    - platform: time
+      at: "07:00:00"
+  action:
+    - action: number.set_value
+      target:
+        entity_id: number.router_fan_cooler_target_temp
+      data:
+        value: 40
+  mode: single
+
+# 3) 过热保护：CPU 超过 55℃ 持续 2 分钟 → 强制全速 + 通知
+#    （恒温自动多半已加到 100%，这里是兜底，防止传感器卡住或容差设太大）
+- id: cooler_hot_alarm
+  alias: 散热底座-CPU过热强制全速
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.router_fan_cooler_cpu_temp
+      above: 55
+      for: "00:02:00"
+  action:
+    - action: router_fan_cooler.set_speed
+      data:
+        percentage: 100
+    - action: persistent_notification.create
+      data:
+        title: 路由器温度过高
+        message: >-
+          CPU 温度 {{ states('sensor.router_fan_cooler_cpu_temp') }}℃，
+          已强制风扇全速，请检查进风口/风扇是否被挡。
+  mode: single
+
+# 4) 温度回落 → 交回恒温自动
+- id: cooler_back_to_auto
+  alias: 散热底座-温度回落恢复自动
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.router_fan_cooler_cpu_temp
+      below: 45
+      for: "00:05:00"
+  action:
+    - action: router_fan_cooler.set_mode
+      data:
+        mode: auto
+  mode: single
+
+# 5) 下发失败提醒（灯控模块/网关没响应）
+- id: cooler_fan_stuck
+  alias: 散热底座-下发失败提醒
+  trigger:
+    - platform: template
+      value_template: >-
+        {{ states('sensor.router_fan_cooler_status') | string
+           == '下发失败（将重试）' }}
+      for: "00:05:00"
+  action:
+    - action: persistent_notification.create
+      data:
+        title: 散热底座下发失败
+        message: 灯控模块 5 分钟未响应，检查模块供电、网关在线状态。
+  mode: single
+
+# 6) 每日温度小结（验证恒温是否真的稳在 ±1℃）
+- id: cooler_daily_report
+  alias: 散热底座-每日温度小结
+  trigger:
+    - platform: time
+      at: "21:00:00"
+  action:
+    - action: persistent_notification.create
+      data:
+        title: 散热底座今日状态
+        message: >-
+          当前 CPU {{ states('sensor.router_fan_cooler_cpu_temp') }}℃，
+          占空比 {{ states('sensor.router_fan_cooler_duty') }}%，
+          状态 {{ states('sensor.router_fan_cooler_status') }}。
+  mode: single
