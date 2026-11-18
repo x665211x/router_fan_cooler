@@ -1,0 +1,6 @@
+{
+  "name": "路由器散热底座风扇控制",
+  "homeassistant": "2024.6.0",
+  "zip_release": false,
+  "render_readme": true
+}
