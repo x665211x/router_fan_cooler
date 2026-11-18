@@ -1,0 +1,18 @@
+{
+  "domain": "router_fan_cooler",
+  "name": "路由器散热底座风扇控制",
+  "version": "2.1.1",
+  "config_flow": true,
+  "documentation": "https://gitee.com/rinko-znjj/router_fan_cooler",
+  "issue_tracker": "https://gitee.com/rinko-znjj/router_fan_cooler/issues",
+  "codeowners": [
+    "@rinko-znjj"
+  ],
+  "requirements": [],
+  "dependencies": [],
+  "after_dependencies": [
+    "xmluyouqiwenkong"
+  ],
+  "iot_class": "local_polling",
+  "integration_type": "device"
+}

@@ -1,0 +1,148 @@
+{
+  "title": "路由器散热底座风扇控制",
+  "config": {
+    "step": {
+      "user": {
+        "title": "连接散热底座",
+        "description": "{tip}",
+        "data": {
+          "temp_sensor": "CPU 温度传感器",
+          "fan_entity": "风扇控制实体（灯控模块）",
+          "strategy": "控制方式",
+          "target_temp": "目标 CPU 温度（恒温闭环用）",
+          "deadband": "恒温容差 ±℃",
+          "min_temp": "曲线起点温度（曲线/阶梯用）",
+          "max_temp": "曲线终点温度（曲线/阶梯用）",
+          "min_duty": "最低转速（硬下限 20%）",
+          "max_duty": "最高转速",
+          "update_interval": "计算周期（秒）",
+          "failsafe": "温度读不到时"
+        },
+        "data_description": {
+          "temp_sensor": "选 xmluyouqiwenkong 集成提供的 CPU 温度实体",
+          "fan_entity": "选米家蓝牙 Mesh 灯控模块在 HA 里的实体（多为 light，亮度=占空比）",
+          "strategy": "恒温闭环＝按目标温度闭环调节（推荐）；温度曲线＝两点线性；阶梯分段＝4 档固定转速",
+          "target_temp": "恒温闭环要稳住的温度，默认 40℃；实际温度被夹在它 ±容差 内",
+          "deadband": "40±1 表示 39~41℃ 保持转速；超过 41 加速、低于 39 减速",
+          "min_temp": "到这个温度就用最低转速，默认 38℃（曲线/阶梯生效）",
+          "max_temp": "到这个温度就用最高转速，默认 48℃（曲线/阶梯生效）",
+          "min_duty": "风扇能稳定起转的最低占空比，实测 20% 以下不转；不允许低于 20",
+          "max_duty": "满载占空比，一般 100",
+          "update_interval": "两次计算/下发的最小间隔，Mesh 设备建议 ≥10 秒",
+          "failsafe": "温度实体失联（超 5 分钟没更新）时：全速或保持，绝不停转"
+        }
+      }
+    },
+    "error": {
+      "min_gt_max": "最低占空比不能大于最高占空比",
+      "same_entity": "温度传感器和风扇实体不能是同一个",
+      "temp_order": "曲线终点温度必须高于起点温度",
+      "duty_too_low": "最低转速不能低于 20%（该模块 20% 以下风扇不转）"
+    },
+    "abort": {
+      "already_configured": "这套组合已经配置过了"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "调整控制参数",
+        "description": "改完保存即刻生效，不用重启 Home Assistant。",
+        "data": {
+          "temp_sensor": "CPU 温度传感器",
+          "fan_entity": "风扇控制实体（灯控模块）",
+          "strategy": "控制方式",
+          "target_temp": "目标 CPU 温度（恒温闭环用）",
+          "deadband": "恒温容差 ±℃",
+          "min_temp": "曲线起点温度（曲线/阶梯用）",
+          "max_temp": "曲线终点温度（曲线/阶梯用）",
+          "min_duty": "最低转速（硬下限 20%）",
+          "max_duty": "最高转速",
+          "update_interval": "计算周期（秒）",
+          "failsafe": "温度读不到时"
+        },
+        "data_description": {
+          "temp_sensor": "选 xmluyouqiwenkong 集成提供的 CPU 温度实体",
+          "fan_entity": "选米家蓝牙 Mesh 灯控模块在 HA 里的实体（多为 light，亮度=占空比）",
+          "strategy": "恒温闭环＝按目标温度闭环调节（推荐）；温度曲线＝两点线性；阶梯分段＝4 档固定转速",
+          "target_temp": "恒温闭环要稳住的温度，默认 40℃；实际温度被夹在它 ±容差 内",
+          "deadband": "40±1 表示 39~41℃ 保持转速；超过 41 加速、低于 39 减速",
+          "min_temp": "到这个温度就用最低转速，默认 38℃（曲线/阶梯生效）",
+          "max_temp": "到这个温度就用最高转速，默认 48℃（曲线/阶梯生效）",
+          "min_duty": "风扇能稳定起转的最低占空比，实测 20% 以下不转；不允许低于 20",
+          "max_duty": "满载占空比，一般 100",
+          "update_interval": "两次计算/下发的最小间隔，Mesh 设备建议 ≥10 秒",
+          "failsafe": "温度实体失联（超 5 分钟没更新）时：全速或保持，绝不停转"
+        }
+      }
+    },
+    "error": {
+      "min_gt_max": "最低占空比不能大于最高占空比",
+      "same_entity": "温度传感器和风扇实体不能是同一个",
+      "temp_order": "曲线终点温度必须高于起点温度",
+      "duty_too_low": "最低转速不能低于 20%（该模块 20% 以下风扇不转）"
+    }
+  },
+  "selector": {
+    "failsafe": {
+      "options": {
+        "max": "温度读不到 → 全速散热（推荐）",
+        "hold": "温度读不到 → 保持上次转速"
+      }
+    }
+  },
+  "services": {
+    "set_speed": {
+      "name": "设定风扇转速",
+      "description": "立刻按指定占空比运行，并切到手动模式。",
+      "fields": {
+        "percentage": {
+          "name": "占空比",
+          "description": "20–100，不会停转"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "切换风扇模式",
+      "description": "自动（按控制方式）/ 手动固定占空比。",
+      "fields": {
+        "mode": {
+          "name": "模式",
+          "description": "auto / manual"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "set_strategy": {
+      "name": "切换控制方式",
+      "description": "恒温闭环 / 温度曲线 / 阶梯分段。",
+      "fields": {
+        "strategy": {
+          "name": "控制方式",
+          "description": "thermostat / curve / step"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "recalculate": {
+      "name": "立即重算一次",
+      "description": "马上按当前温度算一次并下发。",
+      "fields": {
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+# 路由器散热底座风扇控制 —— 服务定义
+set_speed:
+  name: 设定风扇转速
+  description: 立刻按指定占空比运行，并自动切到「手动占空比」模式（临时接管自动控制）。
+  fields:
+    percentage:
+      name: 占空比
+      description: 20–100（低于 20% 风扇不转，本集成不允许停转）
+      required: true
+      example: 60
+      selector:
+        number:
+          min: 20
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+    entity_id_optional:
+      name: 指定散热底座（可选）
+      description: 只配了一台时可以留空；配了多台时用来指定目标。
+      required: false
+      selector:
+        entity:
+          integration: router_fan_cooler
+          domain: sensor
+
+set_mode:
+  name: 切换风扇模式
+  description: 自动（按所选控制方式）/ 手动固定占空比。没有关闭选项——风扇永不停转。
+  fields:
+    mode:
+      name: 模式
+      description: auto=自动，manual=手动固定占空比
+      required: true
+      selector:
+        select:
+          options:
+            - value: auto
+              label: 自动（按所选控制方式）
+            - value: manual
+              label: 手动占空比
+
+set_strategy:
+  name: 切换控制方式
+  description: 恒温闭环 / 温度曲线 / 阶梯分段，切换后立即按新方式重算并写回配置。
+  fields:
+    strategy:
+      name: 控制方式
+      description: thermostat=恒温闭环，curve=温度曲线，step=阶梯分段
+      required: true
+      selector:
+        select:
+          options:
+            - value: thermostat
+              label: 恒温闭环（推荐）
+            - value: curve
+              label: 温度曲线（两点线性）
+            - value: step
+              label: 阶梯分段（4 档）
+
+recalculate:
+  name: 立即重算一次
+  description: 马上按当前温度/控制方式算一次并下发，返回控制方式、温度、占空比与状态。
+  fields:
+    entity_id_optional:
+      name: 指定散热底座（可选）
+      description: 只配了一台时可以留空
+      required: false
+      selector:
+        entity:
+          integration: router_fan_cooler
+          domain: sensor
