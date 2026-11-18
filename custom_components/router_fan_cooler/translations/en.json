@@ -1,0 +1,148 @@
+{
+  "title": "Router Cooling Pad Fan Control",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect the cooling pad",
+        "description": "{tip}",
+        "data": {
+          "strategy": "Control method",
+          "temp_sensor": "CPU temperature sensor",
+          "fan_entity": "Fan control entity (PWM module)",
+          "target_temp": "Target CPU temperature (thermostat)",
+          "deadband": "Thermostat temperature tolerance (±°C)",
+          "min_temp": "Curve start temperature (curve/step)",
+          "max_temp": "Curve end temperature (curve/step)",
+          "min_duty": "Minimum speed (hard floor 20%)",
+          "max_duty": "Maximum speed",
+          "update_interval": "Update interval (s)",
+          "failsafe": "When temperature is unavailable"
+        },
+        "data_description": {
+          "strategy": "Thermostat = closed-loop around target (recommended); Curve = two-point linear; Step = 4 fixed gears",
+          "temp_sensor": "Pick the CPU temperature entity provided by xmluyouqiwenkong",
+          "fan_entity": "The Mi BLE Mesh PWM module entity (usually a light; brightness = duty)",
+          "target_temp": "Temperature to hold, default 40 °C; kept within target ± temperature tolerance",
+          "deadband": "40±1 holds speed between 39–41 °C",
+          "min_temp": "Minimum speed at this temperature, default 38 °C",
+          "max_temp": "Maximum speed at this temperature, default 48 °C",
+          "min_duty": "Lowest duty that keeps the fan spinning; never below 20%",
+          "max_duty": "Full-speed duty, usually 100",
+          "update_interval": "Minimum seconds between recalculation; Mesh devices: 10 s or more",
+          "failsafe": "Fallback when the temperature entity is stale (over 5 minutes); the fan never stops"
+        }
+      }
+    },
+    "error": {
+      "min_gt_max": "Minimum duty cannot be greater than maximum duty",
+      "same_entity": "Temperature sensor and fan entity must differ",
+      "temp_order": "Curve end temperature must be higher than start temperature",
+      "duty_too_low": "Minimum speed cannot be below 20%"
+    },
+    "abort": {
+      "already_configured": "This combination is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Adjust control parameters",
+        "description": "Changes take effect immediately, no restart needed.",
+        "data": {
+          "strategy": "Control method",
+          "temp_sensor": "CPU temperature sensor",
+          "fan_entity": "Fan control entity (PWM module)",
+          "target_temp": "Target CPU temperature (thermostat)",
+          "deadband": "Thermostat temperature tolerance (±°C)",
+          "min_temp": "Curve start temperature (curve/step)",
+          "max_temp": "Curve end temperature (curve/step)",
+          "min_duty": "Minimum speed (hard floor 20%)",
+          "max_duty": "Maximum speed",
+          "update_interval": "Update interval (s)",
+          "failsafe": "When temperature is unavailable"
+        },
+        "data_description": {
+          "strategy": "Thermostat = closed-loop around target (recommended); Curve = two-point linear; Step = 4 fixed gears",
+          "temp_sensor": "Pick the CPU temperature entity provided by xmluyouqiwenkong",
+          "fan_entity": "The Mi BLE Mesh PWM module entity (usually a light; brightness = duty)",
+          "target_temp": "Temperature to hold, default 40 °C; kept within target ± temperature tolerance",
+          "deadband": "40±1 holds speed between 39–41 °C",
+          "min_temp": "Minimum speed at this temperature, default 38 °C",
+          "max_temp": "Maximum speed at this temperature, default 48 °C",
+          "min_duty": "Lowest duty that keeps the fan spinning; never below 20%",
+          "max_duty": "Full-speed duty, usually 100",
+          "update_interval": "Minimum seconds between recalculation; Mesh devices: 10 s or more",
+          "failsafe": "Fallback when the temperature entity is stale (over 5 minutes); the fan never stops"
+        }
+      }
+    },
+    "error": {
+      "min_gt_max": "Minimum duty cannot be greater than maximum duty",
+      "same_entity": "Temperature sensor and fan entity must differ",
+      "temp_order": "Curve end temperature must be higher than start temperature",
+      "duty_too_low": "Minimum speed cannot be below 20%"
+    }
+  },
+  "selector": {
+    "failsafe": {
+      "options": {
+        "max": "No temperature → full speed (recommended)",
+        "hold": "No temperature → keep last speed"
+      }
+    }
+  },
+  "services": {
+    "set_speed": {
+      "name": "设定风扇转速",
+      "description": "立刻按指定占空比运行，并切到手动模式。",
+      "fields": {
+        "percentage": {
+          "name": "占空比",
+          "description": "20–100，不会停转"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "set_mode": {
+      "name": "切换风扇模式",
+      "description": "自动（按控制方式）/ 手动固定占空比。",
+      "fields": {
+        "mode": {
+          "name": "模式",
+          "description": "auto / manual"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "set_strategy": {
+      "name": "切换控制方式",
+      "description": "恒温闭环 / 温度曲线 / 阶梯分段。",
+      "fields": {
+        "strategy": {
+          "name": "控制方式",
+          "description": "thermostat / curve / step"
+        },
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    },
+    "recalculate": {
+      "name": "立即重算一次",
+      "description": "马上按当前温度算一次并下发。",
+      "fields": {
+        "entity_id_optional": {
+          "name": "指定散热底座（可选）",
+          "description": "只配一台时可留空"
+        }
+      }
+    }
+  }
+}
